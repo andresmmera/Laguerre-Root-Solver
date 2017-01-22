@@ -14,6 +14,8 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#ifndef LAGUERREMETHOD_H
+#define LAGUERREMETHOD_H
 
 #include <complex>
 #include <deque>
@@ -68,3 +70,5 @@ private:
   complex<double> laguerre_core(deque<complex<double>>, complex<double>);//Core function for root calculation
   deque<complex<double>> PolyCoeffs;// Polynomial coefficients
 };
+
+#endif
