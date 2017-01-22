@@ -18,13 +18,17 @@
 
 #include "LaguerreMethod.h"
 
+// P are the polynom coefficients
 LaguerreMethod::LaguerreMethod(deque<complex<double>> P)
 {
  PolyCoeffs = P;
 }
 
 
-// The Laguerre method guarantees convergence to some root regardless the initial guess.
+// This function implements the Laguerre method (see [1], pages 187-188). Given a initial guess, this function finds
+// a root of the given polynom. Since it finds only one root, it requires a driver routine (below) that removes the roots
+// from the initial polynom, P(x), as they are found by the core.
+// Notice that the code structure way inspired by [2]
 complex<double> LaguerreMethod::laguerre_core(deque<complex<double>> P, complex<double> x)
 {
   deque<double> frac={0,0.5, 0.25, 0.75, 0.13, 0.38, 0.62, 0.88, 1.};//Fractional steps for moving the root guess
@@ -48,12 +52,12 @@ complex<double> LaguerreMethod::laguerre_core(deque<complex<double>> P, complex<
     if (abs(b) < err) return x;//x is already a root
      
     //Laguerre method
-    g = d/b;// G(x_k) = P'(x_k) / P(x_k)
-    h = g*g - 2.*f/b;// H(x_k) = G(x_k)^2 - (P''(x_k)/P(x_k))
+    g = d/b;// G(x_k) = P'(x_k) / P(x_k). ([1], eq. 7.10)
+    h = g*g - 2.*f/b;// H(x_k) = G(x_k)^2 - (P''(x_k)/P(x_k)). ([1], eq. 7.11)
     gp = g + sqrt((m-1.)*(m*h-g*g));
     gm = g - sqrt((m-1.)*(m*h-g*g));
     if (abs(gp) < abs(gm)) gp = gm;
-    if (max(abs(gp), abs(gm)) > 0.) dx = m/gp;
+    if (max(abs(gp), abs(gm)) > 0.) dx = m/gp;//([1], eq. 7.12)
     else dx = (1.+abs(x))*complex<double>(cos(1.*it), sin(1.*it));
     x1 = x - dx;
     //This procedure is reapeated until dx -> 0 or the maximum number of iterations is exceeded
@@ -78,9 +82,10 @@ deque<complex<double>> LaguerreMethod::solve_roots()
    x=complex<double>(0,0);
    x = laguerre_core(temp_poly, x);
    if (abs(x.imag()) < 2.0*EPS*abs(x.real())) x=complex<double>(x.real(),0);//Pure real
-   roots.push_back(x);//Every time laguerre() is called, it retrieves a root, no matter where the initial guess is
+   roots.push_back(x);//Every time laguerre_core() is called, it retrieves a root, no matter where the initial guess is
 
-   //Before finding the next root, it is necessary to remove the current root from the polynomial
+   //Before finding the next root, it is necessary to remove the current root from the polynomial and i.e. the coefficients at
+   // each iteration will differ from P(x)
    b = temp_poly[j];
    for (int jj = j-1; jj>=0; jj--)
    {
@@ -90,7 +95,7 @@ deque<complex<double>> LaguerreMethod::solve_roots()
    }
    temp_poly.erase(temp_poly.begin());
  }
-  //Root polish. The Laguerre's method is used again using every root as starting point. This should refine the previous result
+  //Root polishing. Laguerre's method is used again using every root as starting point. This should refine the previous result
   for (int j=1; j <= PolyCoeffs.size()-1; j++) roots[j] = laguerre_core(PolyCoeffs, roots[j]);
   return roots;
 }
